@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Prediction App - Debug Version</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        input[type="number"]:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px 5px;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .error {
+            background: #fee;
+            border-left-color: #e74c3c;
+            color: #c0392b;
+        }
+        
+        .success {
+            background: #efe;
+            border-left-color: #27ae60;
+            color: #2c3e50;
+        }
+        
+        .prediction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .prediction-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .prediction-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .model-result {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .model-result:last-child {
+            border-bottom: none;
+        }
+        
+        .average-result {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .debug-info {
+            background: #ffd;
+            border: 1px solid #ffa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 ML Petrophysical Prediction Tool</h1>
+            <p>Predict Porosity (PHI) and Water Saturation (Sw) using Machine Learning</p>
+        </div>
+        
+        <!-- Debug Panel -->
+        <div class="debug-info" id="debugInfo">
+            <strong>Debug Information:</strong><br>
+            <span id="debugText">Application starting...</span>
+        </div>
+        
+        <!-- Health Check Section -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="button" onclick="checkHealth()">Check System Health</button>
+            <button class="button" onclick="getModelInfo()">Get Model Info</button>
+        </div>
+        
+        <!-- Input Form -->
+        <form id="predictionForm">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="depth">Depth (feet):</label>
+                    <input type="number" id="depth" name="Depth" step="0.01" required 
+                           placeholder="e.g., 3500.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="rxort">RxoRt (Ω⋅m):</label>
+                    <input type="number" id="rxort" name="RxoRt" step="0.01" required 
+                           placeholder="e.g., 2.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="rild">RILD (Ω⋅m):</label>
+                    <input type="number" id="rild" name="RILD" step="0.01" required 
+                           placeholder="e.g., 15.7">
+                </div>
+                
+                <div class="form-group">
+                    <label for="mn">MN (API units):</label>
+                    <input type="number" id="mn" name="MN" step="0.01" required 
+                           placeholder="e.g., 25.3">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gr">GR (API units):</label>
+                    <input type="number" id="gr" name="GR" step="0.01" required 
+                           placeholder="e.g., 85.2">
+                </div>
+                
+                <div class="form-group">
+                    <label for="cnls">CNLS (porosity units):</label>
+                    <input type="number" id="cnls" name="CNLS" step="0.01" required 
+                           placeholder="e.g., 0.15">
+                </div>
+                
+                <div class="form-group">
+                    <label for="rhoc">RHOC (g/cm³):</label>
+                    <input type="number" id="rhoc" name="RHOC" step="0.01" required 
+                           placeholder="e.g., 2.35">
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="button" id="predictBtn">
+                    🎯 Make Prediction
+                </button>
+                <button type="button" class="button" onclick="loadSampleData()">
+                    📋 Load Sample Data
+                </button>
+                <button type="button" class="button" onclick="clearForm()">
+                    🗑️ Clear Form
+                </button>
+            </div>
+        </form>
+        
+        <!-- Results Section -->
+        <div id="results" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Debug logging function
+        function debugLog(message) {
+            console.log('DEBUG:', message);
+            const debugElement = document.getElementById('debugText');
+            if (debugElement) {
+                debugElement.innerHTML = new Date().toLocaleTimeString() + ': ' + message;
+            }
+        }
+        
+        // Safe object access function to prevent undefined errors
+        function safeGet(obj, path, defaultValue = null) {
+            try {
+                return path.split('.').reduce((curr, prop) => curr && curr[prop], obj) || defaultValue;
+            } catch (e) {
+                console.warn('Safe get failed:', e);
+                return defaultValue;
+            }
+        }
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('DOM loaded, initializing application...');
+            checkHealth();
+        });
+        
+        // Health check function
+        async function checkHealth() {
+            debugLog('Checking system health...');
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const status = safeGet(data, 'status', 'unknown');
+                    const modelCount = safeGet(data, 'model_count', 0);
+                    const models = safeGet(data, 'available_models', []);
+                    
+                    debugLog(`Health check: ${status} - ${modelCount} models loaded: ${models.join(', ')}`);
+                } else {
+                    debugLog('Health check failed: ' + JSON.stringify(data));
+                }
+            } catch (error) {
+                debugLog('Health check error: ' + error.message);
+            }
+        }
+        
+        // Get model info function
+        async function getModelInfo() {
+            debugLog('Getting model information...');
+            
+            try {
+                const response = await fetch('/api/model-info');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const featureOrder = safeGet(data, 'feature_order', []);
+                    const loadedModels = safeGet(data, 'loaded_models', []);
+                    
+                    debugLog(`Model info: ${loadedModels.length} models, features: ${featureOrder.join(', ')}`);
+                    
+                    // Display in results area
+                    showResults({
+                        success: true,
+                        title: 'Model Information',
+                        content: `
+                            <h3>System Status</h3>
+                            <p><strong>Loaded Models:</strong> ${loadedModels.join(', ')}</p>
+                            <p><strong>Feature Order:</strong> ${featureOrder.join(', ')}</p>
+                            <p><strong>Model Count:</strong> ${safeGet(data, 'model_count', 0)}</p>
+                        `
+                    });
+                } else {
+                    debugLog('Model info failed: ' + JSON.stringify(data));
+                }
+            } catch (error) {
+                debugLog('Model info error: ' + error.message);
+            }
+        }
+        
+        // Load sample data
+        function loadSampleData() {
+            debugLog('Loading sample data...');
+            
+            const sampleData = {
+                'Depth': 3545.25,
+                'RxoRt': 2.15,
+                'RILD': 12.8,
+                'MN': 22.5,
+                'GR': 78.3,
+                'CNLS': 0.18,
+                'RHOC': 2.42
+            };
+            
+            Object.keys(sampleData).forEach(key => {
+                const element = document.querySelector(`input[name="${key}"]`);
+                if (element) {
+                    element.value = sampleData[key];
+                } else {
+                    console.warn(`Element not found for ${key}`);
+                }
+            });
+            
+            debugLog('Sample data loaded successfully');
+        }
+        
+        // Clear form
+        function clearForm() {
+            debugLog('Clearing form...');
+            document.getElementById('predictionForm').reset();
+            document.getElementById('results').style.display = 'none';
+        }
+        
+        // Show results function with error handling
+        function showResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.style.display = 'block';
+            
+            if (safeGet(data, 'success')) {
+                resultsDiv.className = 'results success';
+                
+                if (data.content) {
+                    resultsDiv.innerHTML = data.content;
+                } else {
+                    // Handle prediction results
+                    const predictions = safeGet(data, 'predictions', {});
+                    const phiPreds = safeGet(predictions, 'PHI_predictions', {});
+                    const swPreds = safeGet(predictions, 'Sw_predictions', {});
+                    const phiAvg = safeGet(predictions, 'PHI_average');
+                    const swAvg = safeGet(predictions, 'Sw_average');
+                    
+                    let html = '<h3>✅ Prediction Results</h3><div class="prediction-grid">';
+                    
+                    // PHI Results
+                    html += '<div class="prediction-card">';
+                    html += '<div class="prediction-title">Porosity (PHI) Predictions</div>';
+                    
+                    Object.keys(phiPreds).forEach(model => {
+                        const value = safeGet(phiPreds, model, 'N/A');
+                        html += `<div class="model-result"><span>${model}:</span><span>${value}</span></div>`;
+                    });
+                    
+                    if (phiAvg !== null) {
+                        html += `<div class="average-result">Average: ${phiAvg}</div>`;
+                    }
+                    
+                    html += '</div>';
+                    
+                    // Sw Results
+                    html += '<div class="prediction-card">';
+                    html += '<div class="prediction-title">Water Saturation (Sw) Predictions</div>';
+                    
+                    Object.keys(swPreds).forEach(model => {
+                        const value = safeGet(swPreds, model, 'N/A');
+                        html += `<div class="model-result"><span>${model}:</span><span>${value}</span></div>`;
+                    });
+                    
+                    if (swAvg !== null) {
+                        html += `<div class="average-result">Average: ${swAvg}</div>`;
+                    }
+                    
+                    html += '</div></div>';
+                    
+                    resultsDiv.innerHTML = html;
+                }
+            } else {
+                resultsDiv.className = 'results error';
+                const errorMsg = safeGet(data, 'error', 'Unknown error occurred');
+                resultsDiv.innerHTML = `<h3>❌ Error</h3><p>${errorMsg}</p>`;
+            }
+        }
+        
+        // Form submission with comprehensive error handling
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            debugLog('Form submitted, starting prediction...');
+            
+            const predictBtn = document.getElementById('predictBtn');
+            const resultsDiv = document.getElementById('results');
+            
+            // Show loading state
+            predictBtn.disabled = true;
+            predictBtn.innerHTML = '⏳ Predicting...';
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.className = 'results';
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Making predictions...</p></div>';
+            
+            try {
+                // Collect form data with validation
+                const formData = new FormData(this);
+                const data = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    if (value === '' || value === null) {
+                        throw new Error(`${key} cannot be empty`);
+                    }
+                    data[key] = parseFloat(value);
+                    if (isNaN(data[key])) {
+                        throw new Error(`${key} must be a valid number`);
+                    }
+                }
+                
+                debugLog('Sending prediction request with data: ' + JSON.stringify(data));
+                
+                // Make prediction request
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                debugLog('Received response: ' + JSON.stringify(result));
+                
+                if (response.ok) {
+                    showResults(result);
+                    debugLog('Prediction completed successfully');
+                } else {
+                    throw new Error(safeGet(result, 'error', 'Server error occurred'));
+                }
+                
+            } catch (error) {
+                debugLog('Prediction error: ' + error.message);
+                showResults({
+                    success: false,
+                    error: error.message
+                });
+            } finally {
+                // Reset button state
+                predictBtn.disabled = false;
+                predictBtn.innerHTML = '🎯 Make Prediction';
+            }
+        });
+        
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            debugLog('Global error: ' + e.message);
+            console.error('Global error:', e);
+        });
+        
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(e) {
+            debugLog('Unhandled promise rejection: ' + e.reason);
+            console.error('Unhandled promise rejection:', e);
+        });
+    </script>
+</body>
+</html>
