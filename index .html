@@ -1,521 +1,775 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ML Prediction App - Debug Version</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-        
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #667eea;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        
-        input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-        
-        input[type="number"]:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-        
-        .button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            margin: 10px 5px;
-        }
-        
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .results {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 5px solid #667eea;
-        }
-        
-        .error {
-            background: #fee;
-            border-left-color: #e74c3c;
-            color: #c0392b;
-        }
-        
-        .success {
-            background: #efe;
-            border-left-color: #27ae60;
-            color: #2c3e50;
-        }
-        
-        .prediction-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .prediction-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-        
-        .prediction-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .model-result {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .model-result:last-child {
-            border-bottom: none;
-        }
-        
-        .average-result {
-            background: #667eea;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-        
-        .debug-info {
-            background: #ffd;
-            border: 1px solid #ffa;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-family: monospace;
-            font-size: 14px;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .grid-2 {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PetroML — Petrophysical Prediction</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #141720;
+      --surface2: #1c2030;
+      --border:   #252a3a;
+      --gold:     #e8a838;
+      --gold2:    #f5c96a;
+      --cyan:     #3ecfcf;
+      --red:      #e05252;
+      --green:    #4ecb71;
+      --text:     #d4daf0;
+      --muted:    #5a637a;
+      --mono:     'Space Mono', monospace;
+      --sans:     'Syne', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── NOISE TEXTURE OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      background-size: 180px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ─── STRATA LINES BG ─── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 48px,
+        rgba(232,168,56,0.03) 48px,
+        rgba(232,168,56,0.03) 49px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      padding: 48px 0 40px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .logo-block h1 {
+      font-family: var(--sans);
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .logo-block h1 span { color: var(--gold); }
+
+    .logo-block p {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-top: 8px;
+      text-transform: uppercase;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--surface);
+    }
+
+    .status-pill:hover { border-color: var(--gold); color: var(--gold); }
+
+    .status-pill .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.3s;
+    }
+
+    .status-pill.online .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-pill.offline .dot { background: var(--red); }
+
+    /* ─── LAYOUT ─── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .main-grid { grid-template-columns: 1fr; }
+      header { flex-direction: column; gap: 20px; }
+      .status-bar { justify-content: flex-start; }
+    }
+
+    /* ─── PANELS ─── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .panel:nth-child(2) { animation-delay: 0.08s; }
+
+    .panel-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .panel-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: rgba(232,168,56,0.12);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .panel-body { padding: 24px; }
+
+    /* ─── INPUT GRID ─── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 560px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .field label span {
+      color: var(--gold);
+      margin-left: 4px;
+    }
+
+    .field input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--text);
+      width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(232,168,56,0.12);
+    }
+
+    .field input::placeholder { color: var(--muted); }
+
+    /* ─── ACTIONS ─── */
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 8px;
+      border: none;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #0d0f14;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .btn-primary:hover { background: var(--gold2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,168,56,0.3); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ─── DEBUG TERMINAL ─── */
+    .terminal {
+      background: #080a0e;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .terminal-bar {
+      padding: 10px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .terminal-dots { display: flex; gap: 5px; }
+    .terminal-dots span {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .terminal-dots span:nth-child(1) { background: #e05252; }
+    .terminal-dots span:nth-child(2) { background: #e8a838; }
+    .terminal-dots span:nth-child(3) { background: #4ecb71; }
+
+    .terminal-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    .terminal-body {
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: #6be585;
+      min-height: 80px;
+      max-height: 160px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .terminal-body .log-time { color: var(--muted); }
+    .terminal-body .log-msg { color: #6be585; }
+    .terminal-body .log-err { color: var(--red); }
+
+    /* ─── RESULTS PANEL ─── */
+    .results-panel {
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .result-hidden { display: none; }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    .metric-row:last-child { border-bottom: none; }
+
+    .metric-label { color: var(--muted); font-size: 0.72rem; }
+    .metric-value { color: var(--text); }
+
+    .metric-avg {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: rgba(232,168,56,0.08);
+      border: 1px solid rgba(232,168,56,0.25);
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+    }
+
+    .metric-avg .avg-label { color: var(--gold); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .metric-avg .avg-val { color: var(--gold2); font-weight: 700; font-size: 1rem; }
+
+    .result-block { margin-bottom: 24px; }
+    .result-block-title {
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-block-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .error-box {
+      padding: 16px;
+      background: rgba(224,82,82,0.08);
+      border: 1px solid rgba(224,82,82,0.3);
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--red);
+    }
+
+    .success-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 100px;
+      background: rgba(78,203,113,0.1);
+      border: 1px solid rgba(78,203,113,0.3);
+      color: var(--green);
+      margin-bottom: 20px;
+    }
+
+    /* ─── SPINNER ─── */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: var(--bg);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    /* ─── MODEL INFO ─── */
+    .model-info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .model-info-row .k { color: var(--muted); }
+    .model-info-row .v { color: var(--cyan); }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🤖 ML Petrophysical Prediction Tool</h1>
-            <p>Predict Porosity (PHI) and Water Saturation (Sw) using Machine Learning</p>
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-block">
+      <h1>Petro<span>ML</span></h1>
+      <p>Petrophysical Prediction Engine // ML v2.0</p>
+    </div>
+    <div class="status-bar">
+      <button class="status-pill" id="healthPill" onclick="checkHealth()">
+        <span class="dot"></span>
+        System Health
+      </button>
+      <button class="status-pill" onclick="getModelInfo()">
+        <span class="dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></span>
+        Model Info
+      </button>
+    </div>
+  </header>
+
+  <div class="main-grid">
+
+    <!-- LEFT: INPUT FORM -->
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-icon">⛏</div>
+          <span class="panel-title">Input Parameters</span>
         </div>
-        
-        <!-- Debug Panel -->
-        <div class="debug-info" id="debugInfo">
-            <strong>Debug Information:</strong><br>
-            <span id="debugText">Application starting...</span>
-        </div>
-        
-        <!-- Health Check Section -->
-        <div style="text-align: center; margin-bottom: 20px;">
-            <button class="button" onclick="checkHealth()">Check System Health</button>
-            <button class="button" onclick="getModelInfo()">Get Model Info</button>
-        </div>
-        
-        <!-- Input Form -->
-        <form id="predictionForm">
-            <div class="grid-2">
-                <div class="form-group">
-                    <label for="depth">Depth (feet):</label>
-                    <input type="number" id="depth" name="Depth" step="0.01" required 
-                           placeholder="e.g., 3500.5">
-                </div>
-                
-                <div class="form-group">
-                    <label for="rxort">RxoRt (Ω⋅m):</label>
-                    <input type="number" id="rxort" name="RxoRt" step="0.01" required 
-                           placeholder="e.g., 2.5">
-                </div>
-                
-                <div class="form-group">
-                    <label for="rild">RILD (Ω⋅m):</label>
-                    <input type="number" id="rild" name="RILD" step="0.01" required 
-                           placeholder="e.g., 15.7">
-                </div>
-                
-                <div class="form-group">
-                    <label for="mn">MN (API units):</label>
-                    <input type="number" id="mn" name="MN" step="0.01" required 
-                           placeholder="e.g., 25.3">
-                </div>
-                
-                <div class="form-group">
-                    <label for="gr">GR (API units):</label>
-                    <input type="number" id="gr" name="GR" step="0.01" required 
-                           placeholder="e.g., 85.2">
-                </div>
-                
-                <div class="form-group">
-                    <label for="cnls">CNLS (porosity units):</label>
-                    <input type="number" id="cnls" name="CNLS" step="0.01" required 
-                           placeholder="e.g., 0.15">
-                </div>
-                
-                <div class="form-group">
-                    <label for="rhoc">RHOC (g/cm³):</label>
-                    <input type="number" id="rhoc" name="RHOC" step="0.01" required 
-                           placeholder="e.g., 2.35">
-                </div>
+        <div class="panel-body">
+          <form id="predictionForm">
+            <div class="input-grid">
+
+              <div class="field">
+                <label>Depth <span>ft</span></label>
+                <input type="number" name="Depth" step="0.01" required placeholder="e.g. 3500.5">
+              </div>
+
+              <div class="field">
+                <label>RxoRt <span>Ω⋅m</span></label>
+                <input type="number" name="RxoRt" step="0.01" required placeholder="e.g. 2.5">
+              </div>
+
+              <div class="field">
+                <label>RILD <span>Ω⋅m</span></label>
+                <input type="number" name="RILD" step="0.01" required placeholder="e.g. 15.7">
+              </div>
+
+              <div class="field">
+                <label>MN <span>API</span></label>
+                <input type="number" name="MN" step="0.01" required placeholder="e.g. 25.3">
+              </div>
+
+              <div class="field">
+                <label>GR <span>API</span></label>
+                <input type="number" name="GR" step="0.01" required placeholder="e.g. 85.2">
+              </div>
+
+              <div class="field">
+                <label>CNLS <span>p.u.</span></label>
+                <input type="number" name="CNLS" step="0.01" required placeholder="e.g. 0.15">
+              </div>
+
+              <div class="field">
+                <label>RHOC <span>g/cm³</span></label>
+                <input type="number" name="RHOC" step="0.01" required placeholder="e.g. 2.35">
+              </div>
+
             </div>
-            
-            <div style="text-align: center; margin-top: 30px;">
-                <button type="submit" class="button" id="predictBtn">
-                    🎯 Make Prediction
-                </button>
-                <button type="button" class="button" onclick="loadSampleData()">
-                    📋 Load Sample Data
-                </button>
-                <button type="button" class="button" onclick="clearForm()">
-                    🗑️ Clear Form
-                </button>
+
+            <div class="actions">
+              <button type="submit" class="btn btn-primary" id="predictBtn">
+                Run Prediction
+              </button>
+              <button type="button" class="btn btn-ghost" onclick="loadSampleData()">Sample</button>
+              <button type="button" class="btn btn-ghost" onclick="clearForm()">Clear</button>
             </div>
-        </form>
-        
-        <!-- Results Section -->
-        <div id="results" style="display: none;"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- RESULTS (below form on mobile, stays left col) -->
+      <div id="resultsWrapper" class="result-hidden" style="margin-top:20px;">
+        <div class="panel results-panel">
+          <div class="panel-header">
+            <div class="panel-icon">📊</div>
+            <span class="panel-title">Prediction Results</span>
+          </div>
+          <div class="panel-body" id="resultsBody"></div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // Debug logging function
-        function debugLog(message) {
-            console.log('DEBUG:', message);
-            const debugElement = document.getElementById('debugText');
-            if (debugElement) {
-                debugElement.innerHTML = new Date().toLocaleTimeString() + ': ' + message;
-            }
-        }
-        
-        // Safe object access function to prevent undefined errors
-        function safeGet(obj, path, defaultValue = null) {
-            try {
-                return path.split('.').reduce((curr, prop) => curr && curr[prop], obj) || defaultValue;
-            } catch (e) {
-                console.warn('Safe get failed:', e);
-                return defaultValue;
-            }
-        }
-        
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            debugLog('DOM loaded, initializing application...');
-            checkHealth();
-        });
-        
-        // Health check function
-        async function checkHealth() {
-            debugLog('Checking system health...');
-            
-            try {
-                const response = await fetch('/api/health');
-                const data = await response.json();
-                
-                if (response.ok) {
-                    const status = safeGet(data, 'status', 'unknown');
-                    const modelCount = safeGet(data, 'model_count', 0);
-                    const models = safeGet(data, 'available_models', []);
-                    
-                    debugLog(`Health check: ${status} - ${modelCount} models loaded: ${models.join(', ')}`);
-                } else {
-                    debugLog('Health check failed: ' + JSON.stringify(data));
-                }
-            } catch (error) {
-                debugLog('Health check error: ' + error.message);
-            }
-        }
-        
-        // Get model info function
-        async function getModelInfo() {
-            debugLog('Getting model information...');
-            
-            try {
-                const response = await fetch('/api/model-info');
-                const data = await response.json();
-                
-                if (response.ok) {
-                    const featureOrder = safeGet(data, 'feature_order', []);
-                    const loadedModels = safeGet(data, 'loaded_models', []);
-                    
-                    debugLog(`Model info: ${loadedModels.length} models, features: ${featureOrder.join(', ')}`);
-                    
-                    // Display in results area
-                    showResults({
-                        success: true,
-                        title: 'Model Information',
-                        content: `
-                            <h3>System Status</h3>
-                            <p><strong>Loaded Models:</strong> ${loadedModels.join(', ')}</p>
-                            <p><strong>Feature Order:</strong> ${featureOrder.join(', ')}</p>
-                            <p><strong>Model Count:</strong> ${safeGet(data, 'model_count', 0)}</p>
-                        `
-                    });
-                } else {
-                    debugLog('Model info failed: ' + JSON.stringify(data));
-                }
-            } catch (error) {
-                debugLog('Model info error: ' + error.message);
-            }
-        }
-        
-        // Load sample data
-        function loadSampleData() {
-            debugLog('Loading sample data...');
-            
-            const sampleData = {
-                'Depth': 3545.25,
-                'RxoRt': 2.15,
-                'RILD': 12.8,
-                'MN': 22.5,
-                'GR': 78.3,
-                'CNLS': 0.18,
-                'RHOC': 2.42
-            };
-            
-            Object.keys(sampleData).forEach(key => {
-                const element = document.querySelector(`input[name="${key}"]`);
-                if (element) {
-                    element.value = sampleData[key];
-                } else {
-                    console.warn(`Element not found for ${key}`);
-                }
-            });
-            
-            debugLog('Sample data loaded successfully');
-        }
-        
-        // Clear form
-        function clearForm() {
-            debugLog('Clearing form...');
-            document.getElementById('predictionForm').reset();
-            document.getElementById('results').style.display = 'none';
-        }
-        
-        // Show results function with error handling
-        function showResults(data) {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.style.display = 'block';
-            
-            if (safeGet(data, 'success')) {
-                resultsDiv.className = 'results success';
-                
-                if (data.content) {
-                    resultsDiv.innerHTML = data.content;
-                } else {
-                    // Handle prediction results
-                    const predictions = safeGet(data, 'predictions', {});
-                    const phiPreds = safeGet(predictions, 'PHI_predictions', {});
-                    const swPreds = safeGet(predictions, 'Sw_predictions', {});
-                    const phiAvg = safeGet(predictions, 'PHI_average');
-                    const swAvg = safeGet(predictions, 'Sw_average');
-                    
-                    let html = '<h3>✅ Prediction Results</h3><div class="prediction-grid">';
-                    
-                    // PHI Results
-                    html += '<div class="prediction-card">';
-                    html += '<div class="prediction-title">Porosity (PHI) Predictions</div>';
-                    
-                    Object.keys(phiPreds).forEach(model => {
-                        const value = safeGet(phiPreds, model, 'N/A');
-                        html += `<div class="model-result"><span>${model}:</span><span>${value}</span></div>`;
-                    });
-                    
-                    if (phiAvg !== null) {
-                        html += `<div class="average-result">Average: ${phiAvg}</div>`;
-                    }
-                    
-                    html += '</div>';
-                    
-                    // Sw Results
-                    html += '<div class="prediction-card">';
-                    html += '<div class="prediction-title">Water Saturation (Sw) Predictions</div>';
-                    
-                    Object.keys(swPreds).forEach(model => {
-                        const value = safeGet(swPreds, model, 'N/A');
-                        html += `<div class="model-result"><span>${model}:</span><span>${value}</span></div>`;
-                    });
-                    
-                    if (swAvg !== null) {
-                        html += `<div class="average-result">Average: ${swAvg}</div>`;
-                    }
-                    
-                    html += '</div></div>';
-                    
-                    resultsDiv.innerHTML = html;
-                }
-            } else {
-                resultsDiv.className = 'results error';
-                const errorMsg = safeGet(data, 'error', 'Unknown error occurred');
-                resultsDiv.innerHTML = `<h3>❌ Error</h3><p>${errorMsg}</p>`;
-            }
-        }
-        
-        // Form submission with comprehensive error handling
-        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            debugLog('Form submitted, starting prediction...');
-            
-            const predictBtn = document.getElementById('predictBtn');
-            const resultsDiv = document.getElementById('results');
-            
-            // Show loading state
-            predictBtn.disabled = true;
-            predictBtn.innerHTML = '⏳ Predicting...';
-            
-            resultsDiv.style.display = 'block';
-            resultsDiv.className = 'results';
-            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Making predictions...</p></div>';
-            
-            try {
-                // Collect form data with validation
-                const formData = new FormData(this);
-                const data = {};
-                
-                for (let [key, value] of formData.entries()) {
-                    if (value === '' || value === null) {
-                        throw new Error(`${key} cannot be empty`);
-                    }
-                    data[key] = parseFloat(value);
-                    if (isNaN(data[key])) {
-                        throw new Error(`${key} must be a valid number`);
-                    }
-                }
-                
-                debugLog('Sending prediction request with data: ' + JSON.stringify(data));
-                
-                // Make prediction request
-                const response = await fetch('/api/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                debugLog('Received response: ' + JSON.stringify(result));
-                
-                if (response.ok) {
-                    showResults(result);
-                    debugLog('Prediction completed successfully');
-                } else {
-                    throw new Error(safeGet(result, 'error', 'Server error occurred'));
-                }
-                
-            } catch (error) {
-                debugLog('Prediction error: ' + error.message);
-                showResults({
-                    success: false,
-                    error: error.message
-                });
-            } finally {
-                // Reset button state
-                predictBtn.disabled = false;
-                predictBtn.innerHTML = '🎯 Make Prediction';
-            }
-        });
-        
-        // Global error handler
-        window.addEventListener('error', function(e) {
-            debugLog('Global error: ' + e.message);
-            console.error('Global error:', e);
-        });
-        
-        // Unhandled promise rejection handler
-        window.addEventListener('unhandledrejection', function(e) {
-            debugLog('Unhandled promise rejection: ' + e.reason);
-            console.error('Unhandled promise rejection:', e);
-        });
-    </script>
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- DEBUG TERMINAL -->
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="terminal-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="terminal-label">debug // console</span>
+        </div>
+        <div class="terminal-body" id="terminalBody">
+          <div><span class="log-time">--:--:-- </span><span class="log-msg">Initialising PetroML...</span></div>
+        </div>
+      </div>
+
+      <!-- MODEL INFO PANEL -->
+      <div class="panel" id="modelInfoPanel" style="display:none; animation-delay:0.15s">
+        <div class="panel-header">
+          <div class="panel-icon">🧠</div>
+          <span class="panel-title">Model Registry</span>
+        </div>
+        <div class="panel-body" id="modelInfoBody"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ─── TERMINAL LOG ─── */
+  function log(msg, type = 'msg') {
+    console.log('DEBUG:', msg);
+    const body = document.getElementById('terminalBody');
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const div = document.createElement('div');
+    div.innerHTML = `<span class="log-time">${time} </span><span class="log-${type}">${msg}</span>`;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  /* ─── SAFE GET ─── */
+  function safeGet(obj, path, def = null) {
+    try {
+      return path.split('.').reduce((o, k) => o && o[k], obj) ?? def;
+    } catch { return def; }
+  }
+
+  /* ─── HEALTH CHECK ─── */
+  async function checkHealth() {
+    log('Checking system health...');
+    const pill = document.getElementById('healthPill');
+    try {
+      const res = await fetch('/api/health');
+      const data = await res.json();
+      if (res.ok) {
+        const status = safeGet(data, 'status', 'unknown');
+        const models = safeGet(data, 'available_models', []);
+        pill.classList.add('online');
+        log(`System ${status} — ${models.length} models: ${models.join(', ')}`);
+      } else {
+        pill.classList.add('offline');
+        log('Health check failed: ' + JSON.stringify(data), 'err');
+      }
+    } catch (e) {
+      pill.classList.add('offline');
+      log('Health check error: ' + e.message, 'err');
+    }
+  }
+
+  /* ─── MODEL INFO ─── */
+  async function getModelInfo() {
+    log('Fetching model registry...');
+    try {
+      const res = await fetch('/api/model-info');
+      const data = await res.json();
+      if (res.ok) {
+        const features = safeGet(data, 'feature_order', []);
+        const loaded   = safeGet(data, 'loaded_models', []);
+        const count    = safeGet(data, 'model_count', 0);
+        log(`Registry: ${count} models loaded`);
+
+        const panel = document.getElementById('modelInfoPanel');
+        const body  = document.getElementById('modelInfoBody');
+        panel.style.display = 'block';
+
+        body.innerHTML = `
+          <div class="model-info-row"><span class="k">Models Loaded</span><span class="v">${count}</span></div>
+          <div class="model-info-row"><span class="k">Model IDs</span><span class="v">${loaded.join(', ') || '—'}</span></div>
+          <div class="model-info-row"><span class="k">Feature Order</span><span class="v">${features.join(', ') || '—'}</span></div>
+        `;
+      } else {
+        log('Model info error: ' + JSON.stringify(data), 'err');
+      }
+    } catch (e) {
+      log('Model info error: ' + e.message, 'err');
+    }
+  }
+
+  /* ─── SAMPLE DATA ─── */
+  function loadSampleData() {
+    const sample = { Depth: 3545.25, RxoRt: 2.15, RILD: 12.8, MN: 22.5, GR: 78.3, CNLS: 0.18, RHOC: 2.42 };
+    Object.entries(sample).forEach(([k, v]) => {
+      const el = document.querySelector(`input[name="${k}"]`);
+      if (el) el.value = v;
+    });
+    log('Sample data loaded');
+  }
+
+  /* ─── CLEAR FORM ─── */
+  function clearForm() {
+    document.getElementById('predictionForm').reset();
+    document.getElementById('resultsWrapper').classList.add('result-hidden');
+    log('Form cleared');
+  }
+
+  /* ─── RENDER RESULTS ─── */
+  function showResults(data) {
+    const wrapper = document.getElementById('resultsWrapper');
+    const body    = document.getElementById('resultsBody');
+    wrapper.classList.remove('result-hidden');
+
+    if (!safeGet(data, 'success')) {
+      body.innerHTML = `<div class="error-box">⚠ ${safeGet(data, 'error', 'Unknown error')}</div>`;
+      return;
+    }
+
+    if (data.content) {
+      body.innerHTML = data.content;
+      return;
+    }
+
+    const preds   = safeGet(data, 'predictions', {});
+    const phiPred = safeGet(preds, 'PHI_predictions', {});
+    const swPred  = safeGet(preds, 'Sw_predictions', {});
+    const phiAvg  = safeGet(preds, 'PHI_average');
+    const swAvg   = safeGet(preds, 'Sw_average');
+
+    const renderBlock = (title, modelPreds, avg) => {
+      const rows = Object.entries(modelPreds).map(([m, v]) => `
+        <div class="metric-row">
+          <span class="metric-label">${m}</span>
+          <span class="metric-value">${v}</span>
+        </div>
+      `).join('');
+
+      const avgHtml = avg != null ? `
+        <div class="metric-avg">
+          <span class="avg-label">Ensemble Average</span>
+          <span class="avg-val">${avg}</span>
+        </div>
+      ` : '';
+
+      return `
+        <div class="result-block">
+          <div class="result-block-title">${title}</div>
+          ${rows}
+          ${avgHtml}
+        </div>
+      `;
+    };
+
+    body.innerHTML = `
+      <div class="success-badge">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--green)"></span>
+        Prediction complete
+      </div>
+      ${renderBlock('Porosity (PHI)', phiPred, phiAvg)}
+      ${renderBlock('Water Saturation (Sw)', swPred, swAvg)}
+    `;
+  }
+
+  /* ─── FORM SUBMIT ─── */
+  document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('predictBtn');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Running...`;
+    log('Submitting prediction request...');
+
+    try {
+      const raw = new FormData(this);
+      const payload = {};
+      for (const [k, v] of raw.entries()) {
+        if (v === '') throw new Error(`${k} is required`);
+        payload[k] = parseFloat(v);
+        if (isNaN(payload[k])) throw new Error(`${k} must be a number`);
+      }
+
+      log('POST /api/predict — ' + JSON.stringify(payload));
+      const res    = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+      log('Response received');
+
+      if (res.ok) {
+        showResults(result);
+        log('Prediction successful');
+      } else {
+        throw new Error(safeGet(result, 'error', 'Server error'));
+      }
+    } catch (err) {
+      log('Error: ' + err.message, 'err');
+      showResults({ success: false, error: err.message });
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Run Prediction';
+    }
+  });
+
+  /* ─── INIT ─── */
+  document.addEventListener('DOMContentLoaded', () => {
+    log('DOM ready — checking health...');
+    checkHealth();
+  });
+
+  window.addEventListener('error', e => log('Uncaught: ' + e.message, 'err'));
+  window.addEventListener('unhandledrejection', e => log('Promise rejection: ' + e.reason, 'err'));
+</script>
 </body>
 </html>
